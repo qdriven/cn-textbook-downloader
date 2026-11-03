@@ -36,6 +36,7 @@ uv run cn-textbook test
 
 ## 文档目录
 
+- [项目文案](marketing.md) — 对外介绍：解决什么问题、好处是什么
 - [使用指南](usage.md) — 全部命令与选项
 - [架构设计](architecture.md) — 模块结构、来源插件机制、断点续传原理
 - [开发指南](development.md) — 环境搭建、测试、如何添加新来源
