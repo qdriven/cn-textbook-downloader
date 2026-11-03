@@ -15,14 +15,14 @@
 
 ```bash
 cn-textbook download
-cn-textbook download --repo qdriven/ChinaTextbook --branch master --dest ./ChinaTextbook
+cn-textbook download --repo TapXWorld/ChinaTextbook --branch master --dest ./ChinaTextbook
 ```
 
 选项：
 
 | 选项 | 默认值 | 说明 |
 | --- | --- | --- |
-| `--repo` | `qdriven/ChinaTextbook` | GitHub 仓库，格式 owner/name |
+| `--repo` | `TapXWorld/ChinaTextbook` | GitHub 仓库，格式 owner/name；默认原始仓库，不可用时自动尝试镜像 |
 | `--branch` | `master` | 分支或标签 |
 | `--dest` | `ChinaTextbook` | 保存目录 |
 | `--include` | 无 | 只下载匹配的路径，可重复，如 `--include '小学/*' --include README.md` |
@@ -76,6 +76,34 @@ cn-textbook test --dest ./ChinaTextbook --verify-hashes
 
 输出为问题文件表格与汇总（总计 / 正常 / 缺失 / 大小不符 / SHA 不符）；
 发现问题时退出码为 1，全部通过时为 0。
+
+## 镜像仓库
+
+教材内容的原始仓库是 [TapXWorld/ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook)。
+由于体量巨大（43.4 GiB）且内容敏感，原始仓库存在被删除或不可访问的风险，
+工具内置了同内容镜像的自动回退机制：
+
+- **默认**从原始仓库（顺序 0）下载；
+- 原始仓库返回 404（被删 / 不可访问 / 分支不存在）时，**自动按顺序尝试镜像**，
+  日志会明确提示「仓库 xxx 不可用（404），尝试镜像…」和「已切换到镜像仓库：xxx」；
+- 其他错误（如 403 限流、网络超时）**不会**触发回退，按原有重试逻辑处理；
+- 回退成功后，任务清单（manifest）记录实际使用的仓库，`resume` 接着同一地址续传；
+- 镜像与原始仓库同源（fork 且未分叉），Git blob SHA 校验保证文件内容一致；
+- 需要手动定制时可用 `--repo` 手动指定任意仓库地址（含镜像或你自己的 fork）。
+
+内置镜像清单（按尝试顺序，定义在 `sources/github.py` 的 `MIRROR_REPOS`）：
+
+| 顺序 | 仓库 | 最近推送 | 说明 |
+| --- | --- | --- | --- |
+| 0 | [TapXWorld/ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook) | 2026-10 | 原始仓库，84k+ stars |
+| 1 | [qdriven/ChinaTextbook](https://github.com/qdriven/ChinaTextbook) | 2026-10 | 维护者 fork，与上游同步 |
+| 2 | [zixing131/ChinaTextbook](https://github.com/zixing131/ChinaTextbook) | 2026-08 | 社区 fork |
+| 3 | [iab0x00/ChinaTextbook](https://github.com/iab0x00/ChinaTextbook) | 2025-10 | 社区 fork |
+| 4 | [Chiowe/ChinaTextbook-](https://github.com/Chiowe/ChinaTextbook-) | 2025-05 | 社区 fork，star 数最多（572） |
+
+> 镜像清单可通过 GitHub 的 fork 列表核实：
+> `https://api.github.com/repos/TapXWorld/ChinaTextbook/forks?sort=stargazers`
+> 如需增删镜像，修改 `MIRROR_REPOS` 即可，顺序即尝试顺序。
 
 ## 环境变量
 

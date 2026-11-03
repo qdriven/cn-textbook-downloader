@@ -1,6 +1,6 @@
 # cn-textbook 文档
 
-`cn-textbook` 是一个命令行工具，用于从 GitHub 下载 [ChinaTextbook](https://github.com/qdriven/ChinaTextbook) 教材仓库，支持断点续传与完整性校验。
+`cn-textbook` 是一个命令行工具，用于从 GitHub 下载 [ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook) 教材仓库，支持断点续传与完整性校验。默认使用原始仓库，不可用时自动回退到镜像（见[使用指南](usage.md#镜像仓库)）。
 
 ![cn-textbook 使用演示](cn-textbook-demo.gif)
 

@@ -31,6 +31,8 @@ def request_json(url: str, token: str | None, retries: int, timeout: int) -> dic
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 return json.load(response)
         except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError) as exc:
+            if isinstance(exc, urllib.error.HTTPError) and exc.code == 404:
+                raise  # 404 是永久错误（仓库/分支不存在），重试无意义
             if attempt >= retries:
                 raise
             response = exc if isinstance(exc, urllib.error.HTTPError) else None

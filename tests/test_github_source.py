@@ -1,8 +1,9 @@
 from unittest import TestCase
 from unittest.mock import patch
+import urllib.error
 
 from cn_textbook_downloader.core.files import FileItem
-from cn_textbook_downloader.sources.github import GitHubSource
+from cn_textbook_downloader.sources.github import GitHubSource, MIRROR_REPOS
 
 
 class GitHubSourceTests(TestCase):
@@ -50,6 +51,40 @@ class GitHubSourceTests(TestCase):
         ):
             with self.assertRaises(RuntimeError):
                 source.resolve()
+
+    def test_resolve_falls_back_to_mirror_on_404(self):
+        source = GitHubSource("gone/repo", "master")
+        tree = {"tree": [{"path": "a.pdf", "size": 1, "sha": "s1", "type": "blob"}], "truncated": False}
+        with patch("cn_textbook_downloader.core.github_api.request_json") as request_json:
+            request_json.side_effect = [
+                urllib.error.HTTPError("url", 404, "Not Found", None, None),  # gone/repo
+                {"sha": "deadbeef"},                                            # 第一个镜像
+                tree,
+            ]
+            revision, files = source.resolve()
+        self.assertEqual(revision, "deadbeef")
+        self.assertEqual(source.repo, MIRROR_REPOS[0])
+        self.assertEqual(files, [FileItem("a.pdf", 1, "s1")])
+        # raw_url 使用回退后的镜像仓库
+        self.assertIn(source.repo, source.raw_url(files[0]))
+
+    def test_resolve_raises_when_all_repos_404(self):
+        source = GitHubSource("gone/repo", "master")
+        not_found = urllib.error.HTTPError("url", 404, "Not Found", None, None)
+        with patch("cn_textbook_downloader.core.github_api.request_json") as request_json:
+            request_json.side_effect = not_found
+            with self.assertRaises(urllib.error.HTTPError):
+                source.resolve()
+
+    def test_resolve_reraises_non_404_immediately(self):
+        source = GitHubSource("rate/limited", "master")
+        forbidden = urllib.error.HTTPError("url", 403, "Forbidden", None, None)
+        with patch("cn_textbook_downloader.core.github_api.request_json") as request_json:
+            request_json.side_effect = forbidden
+            with self.assertRaises(urllib.error.HTTPError):
+                source.resolve()
+        # 403 不触发镜像回退，只请求了主仓库
+        self.assertEqual(request_json.call_count, 1)
 
     def test_from_manifest_pins_revision(self):
         from cn_textbook_downloader.core.files import FileItem as FI

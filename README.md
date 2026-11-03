@@ -1,10 +1,12 @@
 # cn-textbook-downloader
 
-从 GitHub 下载 [ChinaTextbook](https://github.com/qdriven/ChinaTextbook) 教材仓库（2375 个文件、43.4 GiB）的命令行工具——**一条命令、带进度条、断了能续**。
+从 GitHub 下载 [ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook) 教材仓库（2375 个文件、43.4 GiB）的命令行工具——**一条命令、带进度条、断了能续**。
 
 - **download** — 启动下载任务（TUI 进度界面，自动断点续传）
 - **resume** — 继续未完成的下载任务（manifest 锁定版本，`.part` 字节级续传）
 - **test** — 校验已下载的文件（存在性 / 大小 / Git blob SHA）
+
+默认从原始仓库 [TapXWorld/ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook) 下载；原始仓库 404（被删或不可访问）时自动按顺序尝试镜像，也可用 `--repo` 手动指定。镜像清单见 [docs/usage.md](docs/usage.md#镜像仓库)。
 
 ## 它解决什么问题
 

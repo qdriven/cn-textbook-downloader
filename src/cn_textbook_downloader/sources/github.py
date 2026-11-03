@@ -19,7 +19,7 @@ from ..formatting import format_size, log, validate_repo
 from ..state import Manifest, load_manifest, manifest_path, save_manifest
 from .base import Source
 
-RepoOption = Annotated[str, typer.Option("--repo", help="GitHub 仓库，格式 owner/name")]
+RepoOption = Annotated[str, typer.Option("--repo", help="GitHub 仓库，格式 owner/name；默认原始仓库，不可用时自动尝试镜像")]
 BranchOption = Annotated[str, typer.Option("--branch", help="分支或标签")]
 DestinationOption = Annotated[Path, typer.Option("--dest", help="保存目录")]
 IncludeOption = Annotated[Optional[list[str]], typer.Option("--include", help="只处理匹配的路径，可重复，如 --include '小学/*'")]
@@ -30,6 +30,16 @@ FastSkipOption = Annotated[bool, typer.Option("--fast-skip", help="已有文件�
 MergeOption = Annotated[bool, typer.Option("--merge", help="下载完成后合并 PDF 分块")]
 TokenOption = Annotated[Optional[str], typer.Option("--token", envvar="GITHUB_TOKEN", help="GitHub 令牌，也可通过 GITHUB_TOKEN 环境变量设置")]
 NoTuiOption = Annotated[bool, typer.Option("--no-tui", help="不使用 TUI，使用普通日志输出")]
+
+# 原始仓库（默认下载地址）与同内容镜像：原始仓库 404 时按顺序尝试镜像。
+# 镜像内容与原始仓库同源（均为 fork 且未分叉），SHA 校验保证文件一致。
+DEFAULT_REPO = "TapXWorld/ChinaTextbook"
+MIRROR_REPOS = [
+    "qdriven/ChinaTextbook",
+    "zixing131/ChinaTextbook",
+    "iab0x00/ChinaTextbook",
+    "Chiowe/ChinaTextbook-",
+]
 
 
 class GitHubSource(Source):
@@ -44,9 +54,23 @@ class GitHubSource(Source):
         self.revision: str | None = None
 
     def resolve(self) -> tuple[str, list[FileItem]]:
-        self.revision = resolve_branch_sha(self.repo, self.branch, self.token, self.retries, self.timeout)
-        items = list_tree(self.repo, self.revision, self.token, self.retries, self.timeout)
-        return self.revision, items
+        """解析版本与文件清单；仓库 404（被删/不可访问）时自动尝试镜像。"""
+        candidates = [self.repo] + [m for m in MIRROR_REPOS if m != self.repo]
+        for repo in candidates:
+            try:
+                revision = resolve_branch_sha(repo, self.branch, self.token, self.retries, self.timeout)
+                items = list_tree(repo, revision, self.token, self.retries, self.timeout)
+            except urllib.error.HTTPError as exc:
+                if exc.code != 404 or repo == candidates[-1]:
+                    raise
+                log(f"仓库 {repo} 不可用（404），尝试镜像…")
+                continue
+            if repo != self.repo:
+                log(f"已切换到镜像仓库：{repo}（原始仓库不可用）")
+                self.repo = repo
+            self.revision = revision
+            return revision, items
+        raise RuntimeError("所有仓库地址均不可用")
 
     def raw_url(self, item: FileItem) -> str:
         ref = self.revision or self.branch
@@ -67,7 +91,7 @@ class GitHubSource(Source):
 
         @app.command("download")
         def download(
-            repo: RepoOption = "qdriven/ChinaTextbook",
+            repo: RepoOption = DEFAULT_REPO,
             branch: BranchOption = "master",
             destination: DestinationOption = Path("ChinaTextbook"),
             include: IncludeOption = None,
@@ -99,7 +123,7 @@ class GitHubSource(Source):
                 raise typer.BadParameter("没有匹配的文件")
 
             total = sum(item.size for item in items)
-            log(f"仓库：{repo}；分支：{branch}；匹配文件：{len(items)}；总大小：{format_size(total)}")
+            log(f"仓库：{source.repo}；分支：{branch}；匹配文件：{len(items)}；总大小：{format_size(total)}")
             if dry_run:
                 for item in sorted(items, key=lambda i: i.path):
                     print(f"{item.size:>12}  {item.path}")
@@ -108,7 +132,8 @@ class GitHubSource(Source):
             if load_manifest(destination) is not None:
                 log(f"目录中已有任务清单，将覆盖并开始新任务：{manifest_path(destination)}")
             destination.mkdir(parents=True, exist_ok=True)
-            save_manifest(destination, Manifest(repo=repo, branch=branch, revision=revision, files=items))
+            # resolve 可能因镜像回退改变 source.repo，manifest 记录实际使用的仓库
+            save_manifest(destination, Manifest(repo=source.repo, branch=branch, revision=revision, files=items))
             log(f"任务清单已保存：{manifest_path(destination)}")
 
             code = _execute_download(source, items, destination, options, no_tui)
@@ -145,7 +170,7 @@ class GitHubSource(Source):
         @app.command("test")
         def test(
             destination: DestinationOption = Path("ChinaTextbook"),
-            repo: RepoOption = "qdriven/ChinaTextbook",
+            repo: RepoOption = DEFAULT_REPO,
             branch: BranchOption = "master",
             include: IncludeOption = None,
             verify_hashes: Annotated[bool, typer.Option("--verify-hashes", help="计算每个文件的 Git blob SHA 并校验")] = False,

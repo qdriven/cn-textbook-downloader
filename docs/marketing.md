@@ -6,7 +6,27 @@
 
 ## 一句话
 
-GitHub 上最大的中文教材合集 [ChinaTextbook](https://github.com/qdriven/ChinaTextbook)（2375 个文件、43.4 GiB），用 `git clone` 拉不动，用网页逐个点要几天——现在一条命令、带进度条、断了能续。
+GitHub 上最大的中文教材合集 [ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook)（2375 个文件、43.4 GiB），用 `git clone` 拉不动，用网页逐个点要几天——现在一条命令、带进度条、断了能续。
+
+## 关于仓库地址：原始仓库 + 镜像自动回退
+
+教材内容的**原始仓库**是 [TapXWorld/ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook)（84k+ stars，持续更新）。由于体量巨大且内容敏感，原始仓库存在被删除或不可访问的风险——工具内置了同内容镜像的自动回退：
+
+- 默认从原始仓库下载，正常情况下你无需关心地址问题
+- 原始仓库 404（被删/不可访问）时，自动按顺序尝试镜像，日志中明确提示切换到了哪个
+- 任务清单记录实际使用的仓库，`resume` 会接着同一地址续传，不会混乱
+- 镜像与原始仓库同源（fork 且未分叉），Git blob SHA 校验保证文件内容一致
+- 也可以用 `--repo` 手动指定任意仓库地址
+
+当前内置镜像（按尝试顺序）：
+
+| 顺序 | 仓库 | 说明 |
+|---|---|---|
+| 0 | [TapXWorld/ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook) | 原始仓库（默认） |
+| 1 | [qdriven/ChinaTextbook](https://github.com/qdriven/ChinaTextbook) | 维护者自己的 fork，与上游同步 |
+| 2 | [zixing131/ChinaTextbook](https://github.com/zixing131/ChinaTextbook) | 社区 fork，2026 年仍活跃 |
+| 3 | [iab0x00/ChinaTextbook](https://github.com/iab0x00/ChinaTextbook) | 社区 fork |
+| 4 | [Chiowe/ChinaTextbook-](https://github.com/Chiowe/ChinaTextbook-) | 社区 fork，star 数最多 |
 
 ## 它解决什么问题
 

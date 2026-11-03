@@ -8,7 +8,7 @@ from pathlib import Path
 
 @dataclass
 class DownloadOptions:
-    repo: str = "qdriven/ChinaTextbook"
+    repo: str = "TapXWorld/ChinaTextbook"
     branch: str = "master"
     destination: Path = Path("ChinaTextbook")
     workers: int = 4
