@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# uv：uv.lock 是应用锁文件，应提交以锁定依赖版本
+
+# 测试
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# 类型检查 / lint
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 下载产物：默认目标目录与 manifest
+ChinaTextbook/
+.cn-textbook-downloader/
+*.merging
+
+# 演示录制：临时下载目录与抽帧检查图
+ct-demo/
+docs/frames/

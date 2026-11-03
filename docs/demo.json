@@ -1,0 +1,30 @@
+{
+  "output": "docs/cn-textbook-demo.gif",
+  "cleanup": "rm -rf ct-demo",
+  "width": 1700,
+  "height": 680,
+  "font_size": 16,
+  "font_family": "Cascadia Mono, Microsoft YaHei",
+  "steps": [
+    {
+      "label": "命令总览",
+      "command": "uv run cn-textbook --help < /dev/null",
+      "wait": 3
+    },
+    {
+      "label": "download 选项",
+      "command": "uv run cn-textbook download --help < /dev/null",
+      "wait": 4
+    },
+    {
+      "label": "dry-run：只列出匹配文件",
+      "command": "uv run cn-textbook download --dry-run --include README.md < /dev/null",
+      "wait": 14
+    },
+    {
+      "label": "TUI 下载一个文件（进度条 + 完成状态）",
+      "command": "uv run cn-textbook download --dest ct-demo --include README.md",
+      "wait": 15
+    }
+  ]
+}
